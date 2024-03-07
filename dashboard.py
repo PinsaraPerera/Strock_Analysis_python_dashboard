@@ -3,12 +3,12 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import plotly.express as px
-import fundemental_data
+import fundemental_data_view
 import os
 from alpha_vantage.fundamentaldata import FundamentalData
 from dotenv import load_dotenv
-
-load_dotenv()
+from stocknews import StockNews
+import sentiment_visualize
 
 st.title("Stock Price Dashboard")
 ticker = st.sidebar.text_input("Ticker")
@@ -39,23 +39,26 @@ if button and ticker:
         st.write(f"The annualized standard deviation is {sd:.2f}%")
 
     with fundemental_data:
-        key = os.getenv("ALPHA_VANTAGE_API_KEY")
-        fd = FundamentalData(key, output_format="pandas")
-        st.subheader("Balance Sheet")
-        balance_sheet = fd.get_balance_sheet_annual(ticker)[0]
-        bs = balance_sheet.T[2:]
-        bs.columns = list(balance_sheet.T.iloc[0])
-        st.write(bs)
-        st.subheader("Income Statement")
-        income_statement = fd.get_income_statement_annual(ticker)[0]
-        is_ = income_statement.T[2:]
-        is_.columns = list(income_statement.T.iloc[0])
-        st.write(is_)
-        st.subheader("Cash Flow")
-        cash_flow = fd.get_cash_flow_annual(ticker)[0]
-        cf = cash_flow.T[2:]
-        cf.columns = list(cash_flow.T.iloc[0])
-        st.write(cf)
+        fundemental_data_view.set_fundemental_data(ticker)
 
     with news:
-        st.write("News")
+        st.header(f'News for {ticker}')
+        news = StockNews(ticker, save_news=False)
+        df_news = news.read_rss()
+
+        for i in range(10):
+            st.subheader(f'News {i+1}')
+            st.write(df_news['published'][i])
+            st.write(df_news['title'][i])
+            st.write(df_news['summary'][i])
+
+
+            title_sentiment = df_news['sentiment_title'][i]
+            st.write(f'Title sentiment: {title_sentiment}')
+            news_sentiment = df_news['sentiment_summary'][i]
+            st.write(f'News sentiment: {news_sentiment}')
+
+            sentiment_visualize.set_sentiment_score(news_sentiment)
+
+
+            
