@@ -4,11 +4,35 @@ import numpy as np
 import yfinance as yf
 import plotly.express as px
 import fundemental_data_view
-import os
-from alpha_vantage.fundamentaldata import FundamentalData
-from dotenv import load_dotenv
 from stocknews import StockNews
 import sentiment_visualize
+import base64
+
+st.set_page_config(page_title="Stock Price Dashboard", layout="wide")
+
+
+@st.cache_data
+def get_image_as_base64(file):
+    with open(file, "rb") as t:
+        data = t.read()
+    return base64.b64encode(data).decode()
+
+
+bg_image = get_image_as_base64("images/investing-at-market-high.jpg")
+
+
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/jpg;base64,{bg_image}");
+        background-size: cover;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 st.title("Stock Price Dashboard")
 ticker = st.sidebar.text_input("Ticker")
@@ -42,23 +66,19 @@ if button and ticker:
         fundemental_data_view.set_fundemental_data(ticker)
 
     with news:
-        st.header(f'News for {ticker}')
+        st.header(f"News for {ticker}")
         news = StockNews(ticker, save_news=False)
         df_news = news.read_rss()
 
         for i in range(10):
-            st.subheader(f'News {i+1}')
-            st.write(df_news['published'][i])
-            st.write(df_news['title'][i])
-            st.write(df_news['summary'][i])
+            st.subheader(f"News {i+1}")
+            st.write(df_news["published"][i])
+            st.write(df_news["title"][i])
+            st.write(df_news["summary"][i])
 
-
-            title_sentiment = df_news['sentiment_title'][i]
-            st.write(f'Title sentiment: {title_sentiment}')
-            news_sentiment = df_news['sentiment_summary'][i]
-            st.write(f'News sentiment: {news_sentiment}')
+            title_sentiment = df_news["sentiment_title"][i]
+            st.write(f"Title sentiment: {title_sentiment}")
+            news_sentiment = df_news["sentiment_summary"][i]
+            st.write(f"News sentiment: {news_sentiment}")
 
             sentiment_visualize.set_sentiment_score(news_sentiment)
-
-
-            
